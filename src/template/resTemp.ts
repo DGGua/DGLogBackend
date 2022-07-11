@@ -1,12 +1,13 @@
-export type ResCode = 200000;
-export const ResData: Record<ResCode, string> = {
+export const ResData: Record<number, string> = {
   200000: "OK",
+
+  400001: "Secret Wrong",
 };
 
 export function resData<D>(
-  code: ResCode,
-  data: D,
-  msg: string = ResData[code]
+  code: number,
+  data: D = null,
+  msg: string = ResData[code] || ""
 ) {
   return { code, data, msg };
 }
