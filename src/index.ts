@@ -1,30 +1,118 @@
-import { appendFile } from "fs";
-import { createServer } from "http";
 import { AppDataSource } from "./data-source";
 import { Blog } from "./entity/Blog";
-import { User } from "./entity/User";
-import * as express from "express";
-
+import express from "express";
+import cors from "cors";
+import { BlogDetail } from "./entity/BlogDetail";
+import { json } from "body-parser";
+import { resData } from "./template/resTemp";
+import config from "./config.json";
+import morgan from "morgan"
 const app = express();
+app.use(cors());
+app.use(json());
+app.use(morgan("common"))
 
 async function init() {
   await AppDataSource.initialize();
-  console.log("Inserting a new user into the database...");
-  const blog = new Blog();
-  blog.content = "你好你好你好";
-  blog.title = "你好";
-  blog.create_time = new Date();
-  blog.last_modify = new Date();
-  await AppDataSource.manager.save(blog);
-  console.log("Saved a new user with id: " + blog.blog_id);
-  console.log("Loading users from the database...");
-  const users = await AppDataSource.manager.find(Blog);
-  console.log("Loaded users: ", users);
 }
 app.get("/blog/list", async (req, res) => {
-  const users = await AppDataSource.manager.find(Blog);
-  res.send({ code: 2, data: users, msg: "hi1" });
+  const blogs = await AppDataSource.manager.find(Blog, {order:{"last_modify":"DESC"}});
+  res.send(resData(200000, blogs));
 });
+app.get("/blog/detail", async (req, res) => {
+  const id = req.query["id"];
+  if (typeof id != "string") return;
+
+  const blog = await AppDataSource.manager.findOneBy(Blog, {
+    blog_id: Number.parseInt(id),
+  });
+
+  const blogDetail = await AppDataSource.manager.findOneBy(BlogDetail, {
+    blog_id: Number.parseInt(id),
+  });
+
+  res.send(resData(200000, { ...blog, ...blogDetail }));
+});
+app.post<{}, any, { title: string; content: string; brief?: string }>(
+  "/blog/create",
+  async (req, res) => {
+    const { title, content, brief = content } = req.body;
+    const blog = new Blog();
+    blog.title = title;
+    blog.brief = brief;
+    blog.create_time = new Date();
+    blog.last_modify = new Date();
+    await AppDataSource.manager.insert(Blog, blog);
+
+    const blogDetail = new BlogDetail();
+    blogDetail.blog_id = blog.blog_id;
+    blogDetail.content = content;
+    await AppDataSource.manager.insert(BlogDetail, blogDetail);
+
+    res.send(resData(200000, blog.blog_id));
+  }
+);
+app.post<{}, any, { content: string; secret: string }>(
+  "/temp/createBlog",
+  async (req, res) => {
+    const { secret, content } = req.body;
+    if (secret != config.secret) {
+      res.send(resData(400001));
+      return;
+    }
+
+    const firstRowEnd = content.indexOf("\n");
+    let title = content.slice(0, firstRowEnd);
+    if (title.startsWith("# ")) {
+      title = title.slice(2);
+    }
+    let body = content.slice(firstRowEnd + 1);
+
+    const blog = new Blog();
+    blog.title = title;
+    blog.brief = body.slice(0, body.indexOf("\n"));
+    blog.create_time = new Date();
+    blog.last_modify = new Date();
+    await AppDataSource.manager.insert(Blog, blog);
+
+    const blogDetail = new BlogDetail();
+    blogDetail.blog_id = blog.blog_id;
+    blogDetail.content = content;
+    await AppDataSource.manager.insert(BlogDetail, blogDetail);
+
+    res.send(resData(200000, blog.blog_id));
+  }
+);
+app.post<{}, any, { id: string; content: string; secret: string }>(
+  "/temp/updateBlog",
+  async (req, res) => {
+    const { id, secret, content } = req.body;
+    if (secret != config.secret) {
+      res.send(resData(400001));
+      return;
+    }
+
+    const firstRowEnd = content.indexOf("\n");
+    let title = content.slice(0, firstRowEnd);
+    if (title.startsWith("# ")) {
+      title = title.slice(2);
+    }
+    let body = content.slice(firstRowEnd + 1);
+
+    const blog = new Blog();
+    blog.title = title;
+    blog.brief = body.slice(0, body.indexOf("\n"));
+    blog.last_modify = new Date();
+    await AppDataSource.manager.update(Blog, id, blog);
+
+    const blogDetail = new BlogDetail();
+    blogDetail.content = body;
+    await AppDataSource.manager.update(BlogDetail, id, blogDetail);
+
+    res.send(resData(200000, blog.blog_id));
+  }
+);
 init().then(() => {
   app.listen(3000);
 });
+app.all("*",()=>console.log("hi"))

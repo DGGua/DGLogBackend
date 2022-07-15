@@ -1,7 +1,25 @@
-# Awesome Project Build with TypeORM
+# DGLogBackend
 
-Steps to run this project:
+## How To Start
 
-1. Run `npm i` command
-2. Setup database settings inside `data-source.ts` file
-3. Run `npm start` command
+1. install `node` and `npm`
+
+2. install `yarn`
+
+   ```bash
+   npm install -g yarn
+   ```
+
+3. install dependencies
+
+   ```bash
+   yarn
+   ```
+
+4. configure `config.json` in `src/` refer to `config_template.json`
+
+5. run
+
+   ```bash
+   yarn dev
+   ```

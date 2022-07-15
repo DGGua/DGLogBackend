@@ -15,5 +15,5 @@ export class Blog {
   last_modify: Date;
 
   @Column()
-  content: string;
+  brief: string;
 }
