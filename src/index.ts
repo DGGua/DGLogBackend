@@ -115,6 +115,6 @@ app.post<{}, any, { id: string; content: string; secret: string }>(
   }
 );
 init().then(() => {
-  app.listen(3000);
+  app.listen(80);
 });
 app.all("*", () => console.log("hi"));
