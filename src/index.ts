@@ -6,17 +6,19 @@ import { BlogDetail } from "./entity/BlogDetail";
 import { json } from "body-parser";
 import { resData } from "./template/resTemp";
 import config from "./config.json";
-import morgan from "morgan"
+import morgan from "morgan";
 const app = express();
 app.use(cors());
 app.use(json());
-app.use(morgan("common"))
+app.use(morgan("common"));
 
 async function init() {
   await AppDataSource.initialize();
 }
 app.get("/blog/list", async (req, res) => {
-  const blogs = await AppDataSource.manager.find(Blog, {order:{"last_modify":"DESC"}});
+  const blogs = await AppDataSource.manager.find(Blog, {
+    order: { last_modify: "DESC" },
+  });
   res.send(resData(200000, blogs));
 });
 app.get("/blog/detail", async (req, res) => {
@@ -115,4 +117,4 @@ app.post<{}, any, { id: string; content: string; secret: string }>(
 init().then(() => {
   app.listen(3000);
 });
-app.all("*",()=>console.log("hi"))
+app.all("*", () => console.log("hi"));
