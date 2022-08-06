@@ -7,6 +7,7 @@ import { json } from "body-parser";
 import { resData } from "./template/resTemp";
 import config from "./config.json";
 import morgan from "morgan";
+import imageHandler from "./handlers/imageHandler";
 const app = express();
 app.use(cors());
 app.use(json());
@@ -114,6 +115,7 @@ app.post<{}, any, { id: string; content: string; secret: string }>(
     res.send(resData(200000, blog.blog_id));
   }
 );
+app.use("/image", imageHandler)
 init().then(() => {
   app.listen(80);
 });
