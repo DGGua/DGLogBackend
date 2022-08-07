@@ -34,12 +34,12 @@ imageHandler.get("/get/:imageId", async (req, res) => {
         res.send(400003)
         return;
     }
-    const image = await AppDataSource.manager.find(Image, { where: { image_id: id } })
-    if (image.length == 0) {
+    const image = await AppDataSource.manager.findOne(Image, { where: { image_id: id } })
+    if (!image) {
         res.send(400003)
         return;
     }
-    res.end(image[0].data, "binary")
+    res.end(image.data, "binary")
 })
 
 export default imageHandler

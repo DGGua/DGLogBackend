@@ -8,7 +8,6 @@ export class Image {
     @Column("blob")
     data: Buffer;
 
-
     constructor(image_id: number, data: Buffer) {
         this.image_id = image_id
         this.data = data
