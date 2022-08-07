@@ -1,6 +1,6 @@
 import { randomInt } from "crypto";
 import { Router } from "express";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import multer from "multer";
 import { tmpdir } from "os";
 import { AppDataSource } from "../data-source";
@@ -11,7 +11,6 @@ const upload = multer({ dest: tmpdir() });
 const MAX_IMAGE = 1e9;
 const ALLOWTYPE = ["image/jpeg", "image/png", "image/jpg"]
 imageHandler.post("/uploadImage", upload.single("image"), async (req, res) => {
-    console.log("recieved pic")
     const file = req.file;
     if (!ALLOWTYPE.includes(file.mimetype)) {
         res.send(resData(400002));
@@ -25,7 +24,7 @@ imageHandler.post("/uploadImage", upload.single("image"), async (req, res) => {
         id++;
     }
     let image = new Image(id,
-        readFileSync(file.path).toString());
+        readFileSync(file.path));
     await AppDataSource.manager.insert(Image, image)
     res.send(resData(200000, id.toString(16).toUpperCase()))
 });
@@ -40,7 +39,7 @@ imageHandler.get("/get/:imageId", async (req, res) => {
         res.send(400003)
         return;
     }
-    res.end(image[0].data, "base64")
+    res.end(image[0].data, "binary")
 })
 
 export default imageHandler
